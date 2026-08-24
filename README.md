@@ -71,7 +71,8 @@ What a tool stores about them stays with that tool.
 #### Tools that are fully dependent on terrier:
 
 A tool that only uses terrier for project management should install it, keep
-it current, and refuse to run against one it does not understand.
+it current, and refuse to run against one it does not understand. If terrier is
+optional, this is not required.
 
 **Install it from your own installer.** Terrier is a single binary with no
 runtime, so this is one line, and it is safe to run when terrier is already
