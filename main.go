@@ -22,7 +22,8 @@ Commands:
   prune                 Unregister projects whose directory is gone
   update                Download and install the latest version
   uninstall [--yes]     Remove the binary, config, and cache
-  version               Print the installed version
+  version [--json]      Print the installed version, and the contract number
+                        other tools check against
   help                  Print this help message
 
 Flags:
@@ -86,8 +87,7 @@ func dispatch(args []string) error {
 	case "uninstall":
 		return cmd.Uninstall(args[1:], version)
 	case "version", "--version", "-v":
-		fmt.Println(version)
-		return nil
+		return cmd.Version(args[1:], version)
 	case "help", "--help", "-h":
 		printUsage()
 		return nil

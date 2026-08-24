@@ -59,6 +59,7 @@ The CLI is the contract. Read the registry with one command:
 ```sh
 $ terrier ls --json
 {
+  "contract": 1,
   "projects": [
     {
       "path": "/Users/you/Software/dittofleet/whatagain",
@@ -79,6 +80,49 @@ standing in is a separate question with its own command.
 A repo whose config defers elsewhere, through an `include` or an `insteadOf`
 rewrite, is resolved by asking git, so the slug never disagrees with what the
 repository would say.
+
+### Depending on terrier
+
+A tool that requires terrier should install it, keep it current, and refuse to
+run against one it does not understand.
+
+**Install it from your own installer.** Terrier is a single binary with no
+runtime, so this is one line, and it is safe to run when terrier is already
+there:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sylophi/terrier/main/install.sh | sh
+```
+
+**Update it when you update.** Run the same line from your tool's update path.
+An existing registry is picked up as it is, so nothing is lost by reinstalling.
+
+**Check the contract before you rely on it.** `contract` is a number that says
+what terrier promises: the shape of what `--json` prints, and the exit codes
+commands answer with. It is not the release version. Fields are only ever added
+to the JSON, so it does not move when terrier gains a feature or a fix. It
+moves only when something a tool could already be relying on changes or goes
+away.
+
+That makes a higher number than yours the one case worth stopping for:
+
+```sh
+want=1                                              # the contract this tool was written for
+have=$(terrier version --json | jq -r .contract) || {
+  echo "mytool needs terrier: https://github.com/sylophi/terrier" >&2
+  exit 1
+}
+if [ "$have" -gt "$want" ]; then
+  echo "mytool understands terrier contract $want, but terrier reports $have." >&2
+  echo "Update mytool." >&2
+  exit 1
+fi
+```
+
+The same number is on every `terrier ls --json`, so a tool that reads the
+registry on each run can check it there instead and never spend a second
+invocation. If your tool needs something from a contract newer than the
+installed terrier, compare the other way for the same reason.
 
 To ask which project the user is standing in:
 

@@ -32,9 +32,13 @@ func List(args []string) error {
 		for _, path := range s.Projects {
 			projects = append(projects, describe(path))
 		}
+		// Carried here as well as on `version`, so a tool that reads the
+		// registry every run notices a terrier replaced underneath it
+		// without paying for a second invocation to ask.
 		return writeJSON(struct {
+			Contract int       `json:"contract"`
 			Projects []Project `json:"projects"`
-		}{projects})
+		}{Contract, projects})
 	}
 
 	if len(s.Projects) == 0 {

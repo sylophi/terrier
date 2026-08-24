@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
+	"io"
+	"os"
 	"strings"
 	"testing"
 
@@ -110,4 +113,53 @@ func TestDescribeOmitsSlugWithoutAGitHubOrigin(t *testing.T) {
 	if p.Path != dir {
 		t.Errorf("path = %q, want %q", p.Path, dir)
 	}
+}
+
+// The contract number is what a tool checks to decide whether it
+// understands this terrier, so it must appear on both the command written
+// for that check and the one a tool already calls every run.
+func TestContractIsReportedWhereToolsLookForIt(t *testing.T) {
+	if Contract < 1 {
+		t.Fatalf("Contract = %d, want a positive number", Contract)
+	}
+	for _, tc := range []struct{ name, out string }{
+		{"version --json", capture(t, func() error { return Version([]string{"--json"}, "v1.2.3") })},
+		{"ls --json", capture(t, func() error { return List([]string{"--json"}) })},
+	} {
+		var got struct {
+			Contract int `json:"contract"`
+		}
+		if err := json.Unmarshal([]byte(tc.out), &got); err != nil {
+			t.Fatalf("%s: %v (output %q)", tc.name, err, tc.out)
+		}
+		if got.Contract != Contract {
+			t.Errorf("%s reported contract %d, want %d", tc.name, got.Contract, Contract)
+		}
+	}
+}
+
+func TestVersionPrintsTheVersionPlainly(t *testing.T) {
+	if got := capture(t, func() error { return Version(nil, "v1.2.3") }); got != "v1.2.3\n" {
+		t.Errorf("got %q, want %q", got, "v1.2.3\n")
+	}
+}
+
+// capture runs fn with stdout redirected, returning what it printed.
+func capture(t *testing.T, fn func() error) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	saved := os.Stdout
+	os.Stdout = w
+	runErr := fn()
+	os.Stdout = saved
+	w.Close()
+	out, _ := io.ReadAll(r)
+	r.Close()
+	if runErr != nil {
+		t.Fatal(runErr)
+	}
+	return string(out)
 }
