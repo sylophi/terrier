@@ -22,8 +22,7 @@ Commands:
   prune                 Unregister projects whose directory is gone
   update                Download and install the latest version
   uninstall [--yes]     Remove the binary, config, and cache
-  version [--json]      Print the installed version, and the contract number
-                        other tools check against
+  version               Print the installed version
   help                  Print this help message
 
 Flags:
@@ -34,6 +33,9 @@ Flags:
 A project is a git repository. Name one by any trailing part of its path:
 "whatagain" finds ~/Software/dittofleet/whatagain, and "dittofleet/whatagain"
 settles it when two repos share a name.
+
+A minor version bump means something a tool could be relying on has changed. A
+patch bump never does, so a tool checks the minor version and nothing else.
 
 Terrier records paths and nothing else. Names, origin URLs, and GitHub slugs
 are read out of git each time they are asked for, so nothing it reports can
@@ -87,7 +89,8 @@ func dispatch(args []string) error {
 	case "uninstall":
 		return cmd.Uninstall(args[1:], version)
 	case "version", "--version", "-v":
-		return cmd.Version(args[1:], version)
+		fmt.Println(version)
+		return nil
 	case "help", "--help", "-h":
 		printUsage()
 		return nil

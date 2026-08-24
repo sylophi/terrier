@@ -59,7 +59,6 @@ The CLI is the contract. Read the registry with one command:
 ```sh
 $ terrier ls --json
 {
-  "contract": 1,
   "projects": [
     {
       "path": "/Users/you/Software/dittofleet/whatagain",
@@ -97,55 +96,35 @@ curl -fsSL https://raw.githubusercontent.com/sylophi/terrier/main/install.sh | s
 **Update it when you update.** Run the same line from your tool's update path.
 An existing registry is picked up as it is, so nothing is lost by reinstalling.
 
-**Check the contract before you rely on it.** `contract` is a number that says
-what terrier promises: the shape of what `--json` prints, and the exit codes
-commands answer with. It is not the release version. Fields are only ever added
-to the JSON, so it does not move when terrier gains a feature or a fix. It
-moves only when something a tool could already be relying on changes or goes
-away.
-
-That makes a higher number than yours the one case worth stopping for:
+**Check the minor version.** A minor bump means something a tool could be
+relying on has changed: a field gone from `--json`, an exit code with new
+meaning, a command that answers differently. A patch bump never does. So the
+number a tool cares about is the minor one, and a higher one than it was
+written for is worth stopping over:
 
 ```sh
-want=1                                              # the contract this tool was written for
-have=$(terrier version --json | jq -r .contract) || {
+# The terrier this tool was written against.
+want_major=0
+want_minor=1
+
+v=$(terrier version) || {
   echo "mytool needs terrier: https://github.com/sylophi/terrier" >&2
   exit 1
 }
-if [ "$have" -gt "$want" ]; then
-  echo "mytool understands terrier contract $want, but terrier reports $have." >&2
+v=${v#v}
+major=${v%%.*}
+minor=$(printf %s "$v" | cut -d. -f2)
+
+if [ "$major" -gt "$want_major" ] ||
+   { [ "$major" -eq "$want_major" ] && [ "$minor" -gt "$want_minor" ]; }; then
+  echo "mytool supports terrier $want_major.$want_minor, but $v is installed." >&2
   echo "Update mytool." >&2
   exit 1
 fi
 ```
 
-The same number is on every `terrier ls --json`, so a tool that reads the
-registry on each run can check it there instead and never spend a second
-invocation. If your tool needs something from a contract newer than the
-installed terrier, compare the other way for the same reason.
-
-To ask which project the user is standing in:
-
-```sh
-terrier path              # prints one absolute path, nothing else
-terrier path --json       # the same record ls emits, for that one project
-```
-
-`path` exits non-zero when the working directory is not inside a registered
-project, so `terrier path >/dev/null || exit` is a complete membership check
-and needs no JSON parsing at all.
-
-Do not read the registry file. It is private and its layout can change. The
-JSON the CLI prints is what stays stable: fields are only ever added.
-
-`terrier ls --json` is the command tools call most, so it runs no subprocesses
-at all, no matter where it is called from. Across 60 registered projects it
-takes under 5ms, most of which is process startup. A tool can call it on every
-invocation without thinking about it.
-
-Nothing stops a tool from working without terrier, and terrier holds no
-per-tool configuration. It answers which projects exist and where they are.
-What a tool stores about them stays with that tool.
+A locally built terrier reports `dev` rather than a number. Skip the check when
+that is what you get, or the comparison will fail on a build that is fine.
 
 ## Install
 
