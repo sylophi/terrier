@@ -68,10 +68,10 @@ Nothing stops a tool from working without terrier, and terrier holds no
 per-tool configuration. It answers which projects exist and where they are.
 What a tool stores about them stays with that tool.
 
-A tool that requires terrier should install it, keep it current, and refuse to
-run against one it does not understand.
+#### Tools that are fully dependent on terrier:
 
-#### If you are fully dependent on terrier:
+A tool that only uses terrier for project management should install it, keep
+it current, and refuse to run against one it does not understand.
 
 **Install it from your own installer.** Terrier is a single binary with no
 runtime, so this is one line, and it is safe to run when terrier is already
