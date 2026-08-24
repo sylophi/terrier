@@ -4,10 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"slices"
 
 	"github.com/sylophi/terrier/internal/cmd"
-	"github.com/sylophi/terrier/internal/update"
 )
 
 var errUnknownCommand = errors.New("unknown command")
@@ -68,12 +66,6 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 		}
 		os.Exit(1)
-	}
-
-	// `update` has just talked to the release API, and `uninstall` has
-	// deleted the cache directory this would recreate.
-	if !slices.Contains([]string{"update", "uninstall"}, args[0]) {
-		update.MaybeCheck(version)
 	}
 }
 

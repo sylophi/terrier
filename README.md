@@ -113,13 +113,9 @@ Installs the latest release to `~/.local/bin/terrier`, with `ter` alongside it
 (override with `TERRIER_INSTALL_DIR`). Supported platforms: macOS (arm64, x64),
 Linux (arm64, x64).
 
-## Updating
-
-`terrier` checks once per day for new releases and prints a hint to stderr when
-one is available. Run `terrier update` to upgrade in place. The check is
-skipped when `CI` or `TERRIER_NO_UPDATE_CHECK` is set, when stdout or stderr is
-not a terminal (which covers every time another tool calls it), or when the
-binary was built locally.
+`terrier update` upgrades in place when you want a newer one. Nothing checks
+for updates on its own, and terrier reaches the network only when you run that
+command.
 
 ## Agent skill
 

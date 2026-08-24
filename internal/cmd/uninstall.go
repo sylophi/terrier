@@ -15,9 +15,9 @@ import (
 
 const uninstallUsage = "usage: terrier uninstall [--yes]"
 
-// Uninstall removes the terrier binary, its `ter` alias, the config
-// directory, and the data directory. Order is data → config → binary so a
-// failure leaves a tool to retry with.
+// Uninstall removes the terrier binary, its `ter` alias, and the config
+// directory. Order is config, then alias, then binary, so a failure leaves
+// a tool to retry with.
 func Uninstall(args []string, version string) error {
 	var yes bool
 	rest, err := yesFlag(&yes).parse(args, uninstallUsage)
@@ -39,7 +39,6 @@ func Uninstall(args []string, version string) error {
 	alias := aliasPath(binaryPath)
 
 	configDir := xdg.ConfigDir(xdg.App)
-	dataDir := xdg.DataDir(xdg.App)
 
 	fmt.Println("This will remove:")
 	fmt.Printf("  - Binary:  %s\n", binaryPath)
@@ -47,7 +46,6 @@ func Uninstall(args []string, version string) error {
 		fmt.Printf("  - Alias:   %s\n", alias)
 	}
 	fmt.Printf("  - Config:  %s  (%s)\n", configDir, describeRegistry())
-	fmt.Printf("  - Cache:   %s\n", dataDir)
 	fmt.Println()
 	fmt.Println("Only the registry is deleted. No repository is touched, and tools that read")
 	fmt.Println("terrier keep whatever they stored themselves.")
@@ -69,7 +67,6 @@ func Uninstall(args []string, version string) error {
 		path  string
 		fn    func(string) error
 	}{
-		{"cache directory", dataDir, os.RemoveAll},
 		{"config directory", configDir, os.RemoveAll},
 		{"alias", alias, os.Remove},
 		{"binary", binaryPath, os.Remove},

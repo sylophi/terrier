@@ -11,15 +11,13 @@ import (
 // from. The spec says to ignore it, and so do we.
 func TestRelativeXDGValuesAreIgnored(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", "relcfg")
-	t.Setenv("XDG_DATA_HOME", "../reldata")
 
-	for name, got := range map[string]string{"ConfigDir": ConfigDir(App), "DataDir": DataDir(App)} {
-		if !filepath.IsAbs(got) {
-			t.Errorf("%s = %q, want an absolute path", name, got)
-		}
-		if strings.Contains(got, "relcfg") || strings.Contains(got, "reldata") {
-			t.Errorf("%s = %q, want the relative value ignored", name, got)
-		}
+	got := ConfigDir(App)
+	if !filepath.IsAbs(got) {
+		t.Errorf("ConfigDir = %q, want an absolute path", got)
+	}
+	if strings.Contains(got, "relcfg") {
+		t.Errorf("ConfigDir = %q, want the relative value ignored", got)
 	}
 }
 
@@ -30,13 +28,9 @@ func TestAbsoluteXDGValuesAreUsed(t *testing.T) {
 	}
 }
 
-func TestDefaultsSitUnderHome(t *testing.T) {
+func TestTheDefaultSitsUnderHome(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", "")
-	t.Setenv("XDG_DATA_HOME", "")
 	if got, want := ConfigDir(App), filepath.Join(Home(), ".config", App); got != want {
 		t.Errorf("ConfigDir = %q, want %q", got, want)
-	}
-	if got, want := DataDir(App), filepath.Join(Home(), ".local", "share", App); got != want {
-		t.Errorf("DataDir = %q, want %q", got, want)
 	}
 }
