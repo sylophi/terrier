@@ -71,6 +71,8 @@ What a tool stores about them stays with that tool.
 A tool that requires terrier should install it, keep it current, and refuse to
 run against one it does not understand.
 
+#### If you are fully dependent on terrier:
+
 **Install it from your own installer.** Terrier is a single binary with no
 runtime, so this is one line, and it is safe to run when terrier is already
 there:
