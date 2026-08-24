@@ -38,21 +38,7 @@ project it belongs to rather than to the worktree. The one thing terrier can be
 wrong about is a repo that moved or was deleted, which `ls` shows as
 `(missing)` and `terrier prune` drops after confirming.
 
-## Commands
-
-```
-terrier add [<path>]          Register a repo, defaulting to the current one
-terrier rm <project>...       Unregister a repo, leaving every file alone
-terrier ls                    List registered projects
-terrier path [<project>]      Print where a project lives, defaulting to this one
-terrier prune                 Unregister projects whose directory is gone
-terrier update                Download and install the latest version
-terrier uninstall [--yes]     Remove the binary, config, and cache
-```
-
-Run `terrier help` for the flags.
-
-## For tools
+### Depending on terrier (tools)
 
 The CLI is the contract. Read the registry with one command:
 
@@ -68,42 +54,19 @@ $ terrier ls --json
 }
 ```
 
+It is not recommended to call any other command (apart from management commands like
+`update`, etc.) as a dependent tool.
+
 `path` is always there. `slug` is the `owner/name` of the repo's GitHub origin,
 absent when it has neither. A project whose directory has gone carries
 `"missing": true` and nothing else, so skip those or leave them to `prune`.
 
-Nothing else is reported, because nothing else would be worth reading. A name
-is the base of the path you already have, and which project the caller is
-standing in is a separate question with its own command.
-
-A repo whose config defers elsewhere, through an `include` or an `insteadOf`
-rewrite, is resolved by asking git, so the slug never disagrees with what the
-repository would say.
-
-To ask which project the user is standing in:
-
-```sh
-terrier path              # prints one absolute path, nothing else
-terrier path --json       # the same record ls emits, for that one project
-```
-
-`path` exits non-zero when the working directory is not inside a registered
-project. The exit code on its own is a complete membership check, with no
-output to parse.
-
 Do not read the registry file. It is private and its layout can change. The
 JSON the CLI prints is what stays stable: fields are only ever added.
-
-`terrier ls --json` is the command tools call most, so it runs no subprocesses
-at all, no matter where it is called from. Across 60 registered projects it
-takes under 5ms, most of which is process startup. A tool can call it on every
-invocation without thinking about it.
 
 Nothing stops a tool from working without terrier, and terrier holds no
 per-tool configuration. It answers which projects exist and where they are.
 What a tool stores about them stays with that tool.
-
-### Depending on terrier
 
 A tool that requires terrier should install it, keep it current, and refuse to
 run against one it does not understand.
@@ -134,6 +97,20 @@ find is higher. Compare the two components as numbers rather than as text, or
 0.10 will read as older than 0.9. A terrier built from source reports `dev`
 instead of a version, which has nothing to compare, so decide on purpose
 whether that passes or fails in your tool.
+
+## Commands (users)
+
+```
+terrier add [<path>]          Register a repo, defaulting to the current one
+terrier rm <project>...       Unregister a repo, leaving every file alone
+terrier ls                    List registered projects
+terrier path [<project>]      Print where a project lives, defaulting to this one
+terrier prune                 Unregister projects whose directory is gone
+terrier update                Download and install the latest version
+terrier uninstall [--yes]     Remove the binary, config, and cache
+```
+
+Run `terrier help` for the flags.
 
 ## Install
 
