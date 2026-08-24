@@ -11,21 +11,19 @@ import (
 )
 
 // Project is the record terrier reports. Only Path comes from the
-// registry. Everything else is derived from the repository on the spot,
-// which is why none of it can be stale.
+// registry. Slug is derived from the repository on the spot, which is why
+// it cannot be stale, and Missing from whether the path is still there.
+//
+// Nothing here restates something the caller already has. A name is the
+// base of the path, and which project the caller is standing in is what
+// `terrier path` answers, so neither is worth a field.
 type Project struct {
 	Path string `json:"path"`
-	Name string `json:"name"`
-	// Remote is the `origin` URL, absent when the repo has no origin.
-	Remote string `json:"remote,omitempty"`
-	// Slug is "owner/name" for a GitHub origin, and absent otherwise, so a
-	// remote hosted elsewhere reports a URL rather than a slug that would
-	// mean nothing.
+	// Slug is "owner/name" for a GitHub origin, absent otherwise.
 	Slug string `json:"slug,omitempty"`
 	// Missing marks a project whose directory is gone. It is reported
 	// rather than hidden, so `prune` has something to explain.
 	Missing bool `json:"missing,omitempty"`
-	Current bool `json:"current,omitempty"`
 }
 
 // missing reports whether a registered path has gone away. It is the one
@@ -40,17 +38,12 @@ func missing(path string) bool {
 // describe builds the full record for a registered path. It reads the
 // repository's config file directly rather than running git, so listing
 // every project costs no subprocesses at all.
-//
-// It takes the current project's path rather than a bool so that no caller
-// can assert currentness on its own: the comparison happens here, once,
-// and a caller that has not resolved a current project passes "".
-func describe(path, current string) Project {
-	p := Project{Path: path, Name: filepath.Base(path), Current: path == current}
+func describe(path string) Project {
+	p := Project{Path: path}
 	if p.Missing = missing(path); p.Missing {
 		return p
 	}
-	p.Remote = git.OriginURL(path)
-	p.Slug = git.Slug(p.Remote)
+	p.Slug = git.Slug(git.OriginURL(path))
 	return p
 }
 

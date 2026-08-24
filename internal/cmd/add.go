@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/sylophi/terrier/internal/git"
 	"github.com/sylophi/terrier/internal/store"
@@ -41,10 +42,9 @@ func Add(args []string) error {
 		return err
 	}
 
-	p := describe(root, "")
-	label := p.Slug
+	label := describe(root).Slug
 	if label == "" {
-		label = p.Name
+		label = filepath.Base(root)
 	}
 	if added {
 		fmt.Printf("Registered %s (%s)\n", label, tilde(root))

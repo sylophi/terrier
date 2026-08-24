@@ -29,31 +29,14 @@ $ cd $(terrier path port-pool)
 
 `ter` is installed as a shorter name for the same tool.
 
-## What it stores
-
-Paths. That is the whole file:
-
-```json
-{
-  "schemaVersion": 1,
-  "projects": [
-    "/Users/you/Software/dittofleet/whatagain"
-  ]
-}
-```
-
-A name, an origin URL, or a default branch kept here would be a copy of
-something git already knows, and a copy is a thing that goes stale. So terrier
-records the path and reads everything else out of the repository each time it
-is asked. Nothing it reports can disagree with the repo.
-
-The one thing it can get out of step with is a repo that moved or was deleted.
-Those are listed as `(missing)` rather than hidden, and `terrier prune` drops
-them after confirming.
-
-Projects are registered by the path of the **main worktree**, so `terrier add`
-and `terrier path` inside a linked worktree resolve to the project it belongs
-to, not to the worktree.
+Terrier records the path of a repo and nothing else. A name, an origin URL, or
+a default branch kept alongside it would be a copy of something git already
+knows, and a copy is a thing that goes stale, so everything else is read out of
+the repository each time it is asked for. A repo is registered by the path of
+its main worktree, so `add` and `path` inside a linked worktree resolve to the
+project it belongs to rather than to the worktree. The one thing terrier can be
+wrong about is a repo that moved or was deleted, which `ls` shows as
+`(missing)` and `terrier prune` drops after confirming.
 
 ## Commands
 
@@ -79,29 +62,29 @@ $ terrier ls --json
   "projects": [
     {
       "path": "/Users/you/Software/dittofleet/whatagain",
-      "name": "whatagain",
-      "remote": "https://github.com/dittofleet/whatagain.git",
-      "slug": "dittofleet/whatagain",
-      "current": true
+      "slug": "dittofleet/whatagain"
     }
   ]
 }
 ```
 
-`path` and `name` are always present. `remote` is absent when the repo has no
-`origin`, and `slug` is absent unless that origin is a GitHub URL, so a remote
-hosted elsewhere reports a URL rather than a slug that would mean nothing. A
-repo whose config defers elsewhere, through an `include` or an `insteadOf`
-rewrite, is resolved by asking git, so the shortcut never reports something the
-repository would disagree with. A
-project whose directory is gone carries `"missing": true`. At most one carries
-`"current": true`.
+`path` is always there. `slug` is the `owner/name` of the repo's GitHub origin,
+absent when it has neither. A project whose directory has gone carries
+`"missing": true` and nothing else, so skip those or leave them to `prune`.
+
+Nothing else is reported, because nothing else would be worth reading. A name
+is the base of the path you already have, and which project the caller is
+standing in is a separate question with its own command.
+
+A repo whose config defers elsewhere, through an `include` or an `insteadOf`
+rewrite, is resolved by asking git, so the slug never disagrees with what the
+repository would say.
 
 To ask which project the user is standing in:
 
 ```sh
 terrier path              # prints one absolute path, nothing else
-terrier path --json       # the same record ls emits
+terrier path --json       # the same record ls emits, for that one project
 ```
 
 `path` exits non-zero when the working directory is not inside a registered

@@ -86,28 +86,28 @@ func TestLooksLikePath(t *testing.T) {
 	}
 }
 
-// describe takes the current project's path rather than a bool so that no
-// caller can assert currentness on its own. `terrier path <name> --json`
-// run from a different repo used to report the named project as current.
-func TestDescribeMarksOnlyTheCurrentProject(t *testing.T) {
-	here, there := t.TempDir(), t.TempDir()
-	if p := describe(there, here); p.Current {
-		t.Error("a project the user is not standing in was marked current")
-	}
-	if p := describe(here, here); !p.Current {
-		t.Error("the current project was not marked current")
-	}
-	if p := describe(here, ""); p.Current {
-		t.Error("a project was marked current with no current project resolved")
-	}
-}
-
 func TestDescribeReportsAMissingPath(t *testing.T) {
-	p := describe("/no/such/path/anywhere", "")
+	p := describe("/no/such/path/anywhere")
 	if !p.Missing {
 		t.Error("a path that does not exist was not reported missing")
 	}
-	if p.Name != "anywhere" {
-		t.Errorf("name = %q, want %q", p.Name, "anywhere")
+	if p.Slug != "" {
+		t.Errorf("slug = %q, want empty for a path that is not there", p.Slug)
+	}
+}
+
+// A repo with no GitHub origin reports a path and nothing else, rather
+// than a slug that would mean nothing.
+func TestDescribeOmitsSlugWithoutAGitHubOrigin(t *testing.T) {
+	dir := t.TempDir()
+	p := describe(dir)
+	if p.Missing {
+		t.Error("an existing directory was reported missing")
+	}
+	if p.Slug != "" {
+		t.Errorf("slug = %q, want empty", p.Slug)
+	}
+	if p.Path != dir {
+		t.Errorf("path = %q, want %q", p.Path, dir)
 	}
 }

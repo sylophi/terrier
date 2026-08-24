@@ -26,14 +26,11 @@ func List(args []string) error {
 	if err != nil {
 		return err
 	}
-	// Being outside a repository is not an error here, it just means
-	// nothing is marked as current.
-	current, _ := currentPath(s)
 
 	if asJSON {
 		projects := make([]Project, 0, len(s.Projects))
 		for _, path := range s.Projects {
-			projects = append(projects, describe(path, current))
+			projects = append(projects, describe(path))
 		}
 		return writeJSON(struct {
 			Projects []Project `json:"projects"`
@@ -44,6 +41,9 @@ func List(args []string) error {
 		fmt.Println("No projects yet. Register one with `terrier add`.")
 		return nil
 	}
+	// Only the human listing marks where you are. A tool asks `terrier
+	// path` for that, so --json never pays for resolving it.
+	current, _ := currentPath(s)
 	for _, path := range s.Projects {
 		marker := " "
 		if path == current {

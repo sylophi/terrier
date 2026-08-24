@@ -29,22 +29,18 @@ func Path(args []string) error {
 		return err
 	}
 
-	// The current project is resolved either way, so that a project named
-	// on the command line is only reported as current when the user is
-	// actually standing in it. Not being in one is only an error when no
-	// name was given and it was the whole question.
-	current, currentErr := currentPath(s)
-	path := current
+	var path string
 	if len(rest) == 1 {
-		if path, err = resolveRef(s, rest[0]); err != nil {
-			return err
-		}
-	} else if currentErr != nil {
-		return currentErr
+		path, err = resolveRef(s, rest[0])
+	} else {
+		path, err = currentPath(s)
+	}
+	if err != nil {
+		return err
 	}
 
 	if asJSON {
-		return writeJSON(describe(path, current))
+		return writeJSON(describe(path))
 	}
 	fmt.Println(path)
 	return nil
