@@ -80,6 +80,29 @@ A repo whose config defers elsewhere, through an `include` or an `insteadOf`
 rewrite, is resolved by asking git, so the slug never disagrees with what the
 repository would say.
 
+To ask which project the user is standing in:
+
+```sh
+terrier path              # prints one absolute path, nothing else
+terrier path --json       # the same record ls emits, for that one project
+```
+
+`path` exits non-zero when the working directory is not inside a registered
+project. The exit code on its own is a complete membership check, with no
+output to parse.
+
+Do not read the registry file. It is private and its layout can change. The
+JSON the CLI prints is what stays stable: fields are only ever added.
+
+`terrier ls --json` is the command tools call most, so it runs no subprocesses
+at all, no matter where it is called from. Across 60 registered projects it
+takes under 5ms, most of which is process startup. A tool can call it on every
+invocation without thinking about it.
+
+Nothing stops a tool from working without terrier, and terrier holds no
+per-tool configuration. It answers which projects exist and where they are.
+What a tool stores about them stays with that tool.
+
 ### Depending on terrier
 
 A tool that requires terrier should install it, keep it current, and refuse to
@@ -98,33 +121,19 @@ An existing registry is picked up as it is, so nothing is lost by reinstalling.
 
 **Check the minor version.** A minor bump means something a tool could be
 relying on has changed: a field gone from `--json`, an exit code with new
-meaning, a command that answers differently. A patch bump never does. So the
-number a tool cares about is the minor one, and a higher one than it was
-written for is worth stopping over:
+meaning, a command that answers differently. A patch bump never does.
 
 ```sh
-# The terrier this tool was written against.
-want_major=0
-want_minor=1
-
-v=$(terrier version) || {
-  echo "mytool needs terrier: https://github.com/sylophi/terrier" >&2
-  exit 1
-}
-v=${v#v}
-major=${v%%.*}
-minor=$(printf %s "$v" | cut -d. -f2)
-
-if [ "$major" -gt "$want_major" ] ||
-   { [ "$major" -eq "$want_major" ] && [ "$minor" -gt "$want_minor" ]; }; then
-  echo "mytool supports terrier $want_major.$want_minor, but $v is installed." >&2
-  echo "Update mytool." >&2
-  exit 1
-fi
+$ terrier version
+v0.1.0
 ```
 
-A locally built terrier reports `dev` rather than a number. Skip the check when
-that is what you get, or the comparison will fail on a build that is fine.
+Record the major and minor your tool was written against, read them back from
+`terrier version`, and stop with a message naming both versions when what you
+find is higher. Compare the two components as numbers rather than as text, or
+0.10 will read as older than 0.9. A terrier built from source reports `dev`
+instead of a version, which has nothing to compare, so decide on purpose
+whether that passes or fails in your tool.
 
 ## Install
 
