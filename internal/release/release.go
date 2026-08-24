@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"strconv"
+	"time"
 )
 
 const (
@@ -29,6 +31,22 @@ const (
 	// AcceptHeader is GitHub's recommended Accept value for the API.
 	AcceptHeader = "application/vnd.github+json"
 )
+
+// statusError explains a failed response.
+//
+// The one failure worth naming is the rate limit, because the GitHub API
+// allows only 60 unauthenticated requests an hour per address and terrier
+// has no token to raise that with. A bare "HTTP 403" reads as something
+// being broken, when the answer is to run the command again later.
+func statusError(resp *http.Response) error {
+	if resp.StatusCode == http.StatusForbidden && resp.Header.Get("X-RateLimit-Remaining") == "0" {
+		if reset, err := strconv.ParseInt(resp.Header.Get("X-RateLimit-Reset"), 10, 64); err == nil {
+			return fmt.Errorf("GitHub is rate limiting this address. It resets at %s, and `terrier update` will work again then", time.Unix(reset, 0).Format("15:04"))
+		}
+		return fmt.Errorf("GitHub is rate limiting this address. Try `terrier update` again later")
+	}
+	return fmt.Errorf("HTTP %d", resp.StatusCode)
+}
 
 // AssetURL returns the download URL for a tagged binary release.
 func AssetURL(tag, asset string) string {
@@ -80,7 +98,7 @@ func FetchLatestTag(ctx context.Context) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("HTTP %d", resp.StatusCode)
+		return "", statusError(resp)
 	}
 	var data struct {
 		TagName string `json:"tag_name"`
